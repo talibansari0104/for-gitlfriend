@@ -2,92 +2,59 @@ let highestZ = 1;
 
 class Paper {
     holdingPaper = false;
-    prevMouseX = 0;
-    prevMouseY = 0;
+    prevX = 0;
+    prevY = 0;
 
-    mouseX = 0;
-    mouseY = 0;
-
-    velocityX = 0;
-    velocityY = 0;
-
-    currentPaperX = 0;
-    currentPaperY = 0;
+    currentX = 0;
+    currentY = 0;
 
     init(paper) {
-        // Mouse down
-        paper.addEventListener('mousedown', (e) => {
+        // Common function to start drag
+        const startDrag = (x, y) => {
             this.holdingPaper = true;
             paper.style.zIndex = highestZ++;
-            this.prevMouseX = e.clientX;
-            this.prevMouseY = e.clientY;
-        });
+            this.prevX = x;
+            this.prevY = y;
+        };
 
-        // Touch start (finger down)
+        // Common function to move
+        const moveDrag = (x, y) => {
+            if (this.holdingPaper) {
+                const dx = x - this.prevX;
+                const dy = y - this.prevY;
+
+                this.currentX += dx;
+                this.currentY += dy;
+
+                this.prevX = x;
+                this.prevY = y;
+
+                paper.style.transform =
+                    `translate(${this.currentX}px, ${this.currentY}px)`;
+            }
+        };
+
+        // Mouse events
+        paper.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+        window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+        window.addEventListener('mouseup', () => this.holdingPaper = false);
+
+        // Touch events
         paper.addEventListener('touchstart', (e) => {
-            this.holdingPaper = true;
-            paper.style.zIndex = highestZ++;
             const touch = e.touches[0];
-            this.prevMouseX = touch.clientX;
-            this.prevMouseY = touch.clientY;
+            startDrag(touch.clientX, touch.clientY);
         });
 
-        // Mouse move
-        window.addEventListener('mousemove', (e) => {
-            if (this.holdingPaper) {
-                this.mouseX = e.clientX;
-                this.mouseY = e.clientY;
-
-                this.velocityX = this.mouseX - this.prevMouseX;
-                this.velocityY = this.mouseY - this.prevMouseY;
-
-                this.currentPaperX += this.velocityX;
-                this.currentPaperY += this.velocityY;
-
-                this.prevMouseX = this.mouseX;
-                this.prevMouseY = this.mouseY;
-
-                paper.style.transform =
-                    `translateX(${this.currentPaperX}px) translateY(${this.currentPaperY}px)`;
-            }
-        });
-
-        // Touch move (finger drag)
         window.addEventListener('touchmove', (e) => {
-            if (this.holdingPaper) {
-                const touch = e.touches[0];
-                this.mouseX = touch.clientX;
-                this.mouseY = touch.clientY;
-
-                this.velocityX = this.mouseX - this.prevMouseX;
-                this.velocityY = this.mouseY - this.prevMouseY;
-
-                this.currentPaperX += this.velocityX;
-                this.currentPaperY += this.velocityY;
-
-                this.prevMouseX = this.mouseX;
-                this.prevMouseY = this.mouseY;
-
-                paper.style.transform =
-                    `translateX(${this.currentPaperX}px) translateY(${this.currentPaperY}px)`;
-            }
+            const touch = e.touches[0];
+            moveDrag(touch.clientX, touch.clientY);
         });
 
-        // Mouse up
-        window.addEventListener('mouseup', () => {
-            this.holdingPaper = false;
-        });
-
-        // Touch end (finger lifted)
-        window.addEventListener('touchend', () => {
-            this.holdingPaper = false;
-        });
+        window.addEventListener('touchend', () => this.holdingPaper = false);
     }
 }
 
-const papers = Array.from(document.querySelectorAll('.paper'));
-
+const papers = document.querySelectorAll('.paper');
 papers.forEach(paper => {
-    const p = new Paper();
-    p.init(paper);
+    new Paper().init(paper);
 });
